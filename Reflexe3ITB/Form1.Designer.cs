@@ -63,7 +63,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(680, 267);
+            this.button3.Location = new System.Drawing.Point(680, 551);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(166, 45);
             this.button3.TabIndex = 8;
@@ -76,7 +76,7 @@
             this.flowLayoutPanel1.BackColor = System.Drawing.SystemColors.ButtonHighlight;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(615, 12);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(231, 249);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(231, 479);
             this.flowLayoutPanel1.TabIndex = 9;
             // 
             // Form1

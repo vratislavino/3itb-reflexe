@@ -4,12 +4,16 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Reflexe3ITB
 {
+
+    // TODO: změna vlastností se neprojevuje v textboxech (event)
+
     public partial class Form1 : Form
     {
         Tvar aktualni;
@@ -35,24 +39,46 @@ namespace Reflexe3ITB
         private void Button3_Click(object sender, EventArgs e) {
             Type t = aktualni.GetType();
             var fieldInfos = t.GetFields();
+            var propertyInfos = t.GetProperties();
             var methodInfos = t.GetMethods();
-
+            Console.WriteLine("TYP: " + t.FullName);
             flowLayoutPanel1.Controls.Clear();
 
+            /*
             foreach(var field in fieldInfos) {
                 Vlastnost v = new Vlastnost();
                 v.SetName(field.Name);
                 v.SetValue(field.GetValue(aktualni));
                 flowLayoutPanel1.Controls.Add(v);
             }
+            */
 
-            foreach(var method in methodInfos) {
+            foreach (var property in propertyInfos) {
+                Vlastnost v = new Vlastnost(property);
+                v.ValueChanged += OnValueChanged;
+                v.SetName(property.Name);
+                v.SetValue(property.GetValue(aktualni));
+                flowLayoutPanel1.Controls.Add(v);
+            }
+
+            foreach (var method in methodInfos) {
+                if (method.DeclaringType != t)
+                    continue;
+                if (method.Attributes.HasFlag(MethodAttributes.SpecialName)) {
+                    continue;
+                }
+
                 Button button = new Button();
                 button.Text = method.Name;
+                //Console.WriteLine(method.Name + " : " + method.DeclaringType);
                 button.Click += (send, evt) => { method.Invoke(aktualni, new object[] { }); };
                 flowLayoutPanel1.Controls.Add(button);
             }
+        }
 
+        private void OnValueChanged(PropertyInfo info, object val) {
+            Console.WriteLine(info.Name + " : " + val);
+            info.SetValue(aktualni, val);
         }
     }
 
@@ -90,9 +116,30 @@ namespace Reflexe3ITB
 
     public class Tycinka : Tvar
     {
-        public Point a;
-        public Point b;
-        public int sul; // 0-10
+        
+        private Point a;
+        public Point A {
+            get { return a; }
+            set { a = value; }
+        }
+
+        private Point b;
+        public Point B {
+            get { return b; }
+            set { b = value; }
+        }
+
+        private int sul; // 0-10
+        public int Sul {
+            get { return sul; }
+            set {
+                sul = value;
+                if (sul < 0)
+                    sul = 0;
+                if (sul > 10)
+                    sul = 10;
+            }
+        }
 
         public Tycinka(Point a, Point b, int sul) {
             this.a = a;
@@ -102,10 +149,14 @@ namespace Reflexe3ITB
 
         public void PridejSul() {
             sul += 1;
+            if (sul > 10)
+                sul = 10;
         }
 
         public void OdeberSul() {
             sul -= 1;
+            if (sul < 0)
+                sul = 0;
         }
     }
 }
