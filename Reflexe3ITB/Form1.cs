@@ -17,6 +17,7 @@ namespace Reflexe3ITB
     public partial class Form1 : Form
     {
         Tvar aktualni;
+        List<Tvar> tvary = new List<Tvar>();
 
         public Form1() {
             InitializeComponent();
@@ -24,19 +25,49 @@ namespace Reflexe3ITB
 
         private void Button1_Click(object sender, EventArgs e) {
             Ctverec c = new Ctverec(10,10,50);
-            aktualni = c;
-
-            label1.Text = "Ctverec";
+            AddTvar(c);
         }
 
         private void Button2_Click(object sender, EventArgs e) {
             Tycinka t = new Tycinka(new Point(10,10), new Point(180,30), 7);
-
-            aktualni = t;
-            label1.Text = "Tyčinka";
+            AddTvar(t);
         }
 
-        private void Button3_Click(object sender, EventArgs e) {
+        private void AddTvar(Tvar tvar) {
+            if(aktualni != null) {
+                tvary.Add(aktualni);
+                UpdateHistory();
+            }
+
+            aktualni = tvar;
+            aktualni.NecoSeZmenilo += () => {
+                UpdateProperties();
+            };
+            label1.Text = tvar.GetType().Name;
+            UpdateProperties();
+        }
+
+        private void UpdateHistory() {
+
+            flowLayoutPanel2.Controls.Clear();
+            foreach(var tvar in tvary) {
+                Button btn = new Button();
+                btn.Text = tvar.GetType().Name;
+                btn.Tag = tvar;
+                btn.Click += (sender, e) => {
+
+                    var t = (Tvar)(((Button) sender).Tag);
+                    aktualni = t;
+
+                    label1.Text = t.GetType().Name;
+                    UpdateProperties();
+                };
+                flowLayoutPanel2.Controls.Add(btn);
+            }
+
+        }
+
+        private void UpdateProperties() {
             Type t = aktualni.GetType();
             var fieldInfos = t.GetFields();
             var propertyInfos = t.GetProperties();
@@ -71,9 +102,15 @@ namespace Reflexe3ITB
                 Button button = new Button();
                 button.Text = method.Name;
                 //Console.WriteLine(method.Name + " : " + method.DeclaringType);
-                button.Click += (send, evt) => { method.Invoke(aktualni, new object[] { }); };
+                button.Click += (send, evt) => {
+                    method.Invoke(aktualni, new object[] { });
+                };
                 flowLayoutPanel1.Controls.Add(button);
             }
+        }
+
+        private void Button3_Click(object sender, EventArgs e) {
+            UpdateProperties();
         }
 
         private void OnValueChanged(PropertyInfo info, object val) {
@@ -82,9 +119,9 @@ namespace Reflexe3ITB
         }
     }
 
-    public class Tvar
+    public abstract class Tvar
     {
-
+        public abstract event Action NecoSeZmenilo;
     }
 
     public class Clovek
@@ -102,7 +139,26 @@ namespace Reflexe3ITB
 
     public class Ctverec : Tvar
     {
-        public int x, y, sirka;
+        public override event Action NecoSeZmenilo;
+
+        private int x, y, sirka;
+
+        public int X { get => x; set {
+                x = value;
+                NecoSeZmenilo?.Invoke();
+            }
+        }
+        public int Y { get => y; set {
+                y = value;
+                NecoSeZmenilo?.Invoke();
+            }
+        }
+        public int Sirka { get => sirka; set {
+                sirka = value;
+                NecoSeZmenilo?.Invoke();
+            }
+        }
+
         public Ctverec(int x, int y, int sirka) {
             this.x = x;
             this.y = y;
@@ -110,26 +166,34 @@ namespace Reflexe3ITB
         }
 
         public void PosunDoprava() {
-            x += 10;
+            Sirka += 10;
         }
     }
 
     public class Tycinka : Tvar
     {
-        
+        public override event Action NecoSeZmenilo;
+
         private Point a;
         public Point A {
             get { return a; }
-            set { a = value; }
+            set {
+                a = value;
+                NecoSeZmenilo?.Invoke();
+            }
         }
 
         private Point b;
         public Point B {
             get { return b; }
-            set { b = value; }
+            set {
+                b = value;
+                NecoSeZmenilo?.Invoke();
+            }
         }
 
         private int sul; // 0-10
+
         public int Sul {
             get { return sul; }
             set {
@@ -138,6 +202,7 @@ namespace Reflexe3ITB
                     sul = 0;
                 if (sul > 10)
                     sul = 10;
+                NecoSeZmenilo?.Invoke();
             }
         }
 
@@ -148,15 +213,15 @@ namespace Reflexe3ITB
         }
 
         public void PridejSul() {
-            sul += 1;
-            if (sul > 10)
-                sul = 10;
+            Sul += 1;
+            if (Sul > 10)
+                Sul = 10;
         }
 
         public void OdeberSul() {
-            sul -= 1;
-            if (sul < 0)
-                sul = 0;
+            Sul -= 1;
+            if (Sul < 0)
+                Sul = 0;
         }
     }
 }
